@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify
+from flask import render_template
 from flask_cors import CORS
 import pdfplumber
 import os
@@ -15,9 +16,7 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 @app.route("/")
 def home():
-    return {
-        "message": "AI Resume Analyzer Running"
-    }
+    return render_template("index.html")
 
 @app.route("/upload", methods=["POST"])
 def upload_resume():
@@ -54,4 +53,9 @@ def upload_resume():
     return jsonify(analysis)
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 7860))
+
+    app.run(
+        host="0.0.0.0",
+        port=port
+    )
