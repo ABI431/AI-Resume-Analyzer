@@ -10,6 +10,9 @@ pinned: false
 
 # AI Resume Analyzer
 
+## 🚀 Live application 
+https://huggingface.co/spaces/abinand-m-3105/ai-resume-analyzer
+
 An AI-powered Resume Analyzer built using:
 
 - Flask
