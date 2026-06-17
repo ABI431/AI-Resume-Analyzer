@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Resume Analyzer</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+
+<style>
+:root{
+    --bg-0:#05070D;
+    --bg-1:#0A0E1A;
+
+    --card:rgba(15,23,42,.55);
+    --card-strong:rgba(17,24,39,.72);
+
+    --border:rgba(255,255,255,.07);
+    --border-strong:rgba(255,255,255,.14);
+
+    --primary:#8B5CF6;
+    --secondary:#22D3EE;
+
+    --text:#F1F5F9;
+    --dim:#94A3B8;
+    --mute:#5B6479;
+
+    --success:#34D399;
+    --ring-track:rgba(255,255,255,.06);
+
+    --gradient:linear-gradient(135deg,#8B5CF6 0%,#22D3EE 100%);
+
+    --shadow:0 20px 50px -20px rgba(0,0,0,.55);
+    --shadow-sm:0 8px 24px -12px rgba(0,0,0,.45);
+
+    --r-lg:20px;
+    --r-md:14px;
+    --r-sm:10px;
+}
+
+*{margin:0;padding:0;box-sizing:border-box;}
+
+html{scroll-behavior:smooth;}
+
+body{
+    font-family:'Inter',sans-serif;
+    background:
+        radial-gradient(ellipse 60% 50% at 12% 0%, rgba(139,92,246,.16), transparent 60%),
+        radial-gradient(ellipse 55% 45% at 90% 8%, rgba(34,211,238,.13), transparent 60%),
+        radial-gradient(ellipse 70% 50% at 50% 100%, rgba(139,92,246,.07), transparent 60%),
+        var(--bg-0);
+    color:var(--text);
+    min-height:100vh;
+    line-height:1.5;
+}
+
+body::before{
+    content:"";
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+    z-index:0;
+    opacity:.35;
+    background-image:
+        linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px);
+    background-size:42px 42px;
+    mask-image:radial-gradient(ellipse 80% 60% at 50% 0%, black, transparent 70%);
+}
+
+.container{
+    position:relative;
+    z-index:1;
+    width:min(1320px,94%);
+    margin:auto;
+    padding:36px 0 56px;
+}
+
+/* ---------- Hero ---------- */
+
+.eyebrow{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    margin-bottom:18px;
+}
+
+.eyebrow .dot{
+    width:6px;height:6px;border-radius:50%;
+    background:var(--success);
+    box-shadow:0 0 0 0 rgba(52,211,153,.5);
+    animation:pulse 2s infinite;
+}
+
+@keyframes pulse{
+    0%{box-shadow:0 0 0 0 rgba(52,211,153,.45);}
+    70%{box-shadow:0 0 0 6px rgba(52,211,153,0);}
+    100%{box-shadow:0 0 0 0 rgba(52,211,153,0);}
+}
+
+.eyebrow span{
+    font-family:'JetBrains Mono',monospace;
+    font-size:.68rem;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    color:var(--dim);
+}
+
+.eyebrow span#engineStatus{ color:var(--success); }
+
+.hero{
+    text-align:center;
+    margin-bottom:30px;
+}
+
+.hero h1{
+    font-family:'Plus Jakarta Sans',sans-serif;
+    font-size:clamp(1.9rem,3.4vw,2.7rem);
+    font-weight:800;
+    line-height:1.08;
+    letter-spacing:-.02em;
+    margin-bottom:14px;
+}
+
+.gradient-text{
+    background:var(--gradient);
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+}
+
+.hero-tags{
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:center;
+    gap:8px;
+}
+
+.hero-tags span{
+    font-family:'JetBrains Mono',monospace;
+    font-size:.7rem;
+    letter-spacing:.04em;
+    color:var(--dim);
+    border:1px solid var(--border);
+    background:rgba(255,255,255,.02);
+    padding:6px 12px;
+    border-radius:999px;
+}
+
+/* ---------- Glass base ---------- */
+
+.glass{
+    background:var(--card);
+    backdrop-filter:blur(20px);
+    -webkit-backdrop-filter:blur(20px);
+    border:1px solid var(--border);
+    border-radius:var(--r-lg);
+    box-shadow:var(--shadow-sm);
+}
+
+/* ---------- Upload card ---------- */
+
+.upload-card{
+    padding:22px;
+    margin-bottom:22px;
+    background:var(--card-strong);
+}
+
+.upload-grid{
+    display:grid;
+    grid-template-columns:1.25fr 1fr;
+    gap:20px;
+}
+
+.dropzone{
+    position:relative;
+    border:1.5px dashed rgba(139,92,246,.4);
+    border-radius:var(--r-md);
+    background:rgba(139,92,246,.03);
+    min-height:200px;
+
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    gap:6px;
+
+    cursor:pointer;
+    transition:border-color .25s ease, background .25s ease, transform .15s ease;
+    text-align:center;
+    padding:20px;
+}
+
+.dropzone:hover{
+    border-color:var(--primary);
+    background:rgba(139,92,246,.07);
+}
+
+.dropzone.is-dragover{
+    border-color:var(--secondary);
+    background:rgba(34,211,238,.08);
+    transform:scale(.99);
+}
+
+.dropzone svg{
+    width:30px;height:30px;
+    stroke:var(--primary);
+    margin-bottom:4px;
+    opacity:.9;
+}
+
+.dropzone h3{
+    font-family:'Plus Jakarta Sans',sans-serif;
+    font-size:1.02rem;
+    font-weight:600;
+}
+
+.dropzone p{
+    color:var(--mute);
+    font-size:.8rem;
+}
+
+.file-name{
+    margin-top:10px;
+    color:var(--success);
+    font-family:'JetBrains Mono',monospace;
+    font-size:.78rem;
+    font-weight:600;
+}
+
+.controls{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+}
+
+label{
+    display:block;
+    font-size:.72rem;
+    font-weight:600;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    margin-bottom:6px;
+    color:var(--dim);
+}
+
+select,
+textarea{
+    width:100%;
+    outline:none;
+    background:#0D1424;
+    color:var(--text);
+    border:1px solid var(--border);
+    border-radius:var(--r-sm);
+    padding:11px 13px;
+    font-size:.86rem;
+    font-family:'Inter',sans-serif;
+    transition:border-color .2s ease, box-shadow .2s ease;
+}
+
+select:focus,
+textarea:focus{
+    border-color:var(--primary);
+    box-shadow:0 0 0 3px rgba(139,92,246,.18);
+}
+
+textarea{
+    min-height:84px;
+    resize:none;
+    flex:1;
+}
+
+.analyze-btn{
+    border:none;
+    cursor:pointer;
+    background:var(--gradient);
+    color:#0A0E1A;
+    padding:13px;
+    border-radius:var(--r-sm);
+    font-family:'Plus Jakarta Sans',sans-serif;
+    font-weight:700;
+    font-size:.92rem;
+    letter-spacing:.01em;
+    transition:transform .2s ease, box-shadow .2s ease, opacity .2s ease;
+    box-shadow:0 8px 20px -8px rgba(139,92,246,.55);
+}
+
+.analyze-btn:hover{
+    transform:translateY(-2px);
+    box-shadow:0 12px 26px -8px rgba(139,92,246,.7);
+}
+
+.analyze-btn:active{ transform:translateY(0); }
+
+.analyze-btn.is-loading{
+    opacity:.75;
+    cursor:progress;
+}
+
+/* ---------- KPI rings ---------- */
+
+.score-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+    gap:14px;
+    margin-bottom:22px;
+}
+
+.score-card{
+    padding:16px 10px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:8px;
+    transition:border-color .2s ease, transform .2s ease;
+}
+
+.score-card:hover{
+    border-color:var(--border-strong);
+    transform:translateY(-2px);
+}
+
+.ring{
+    position:relative;
+    width:84px;
+    height:84px;
+}
+
+.ring svg{
+    width:100%;
+    height:100%;
+    transform:rotate(-90deg);
+}
+
+.ring circle{
+    fill:none;
+    stroke-width:7;
+}
+
+.ring-track{ stroke:var(--ring-track); }
+
+.ring-progress{
+    stroke:url(#ringGradient);
+    stroke-linecap:round;
+    stroke-dasharray:264;
+    stroke-dashoffset:264;
+    transition:stroke-dashoffset 1s cubic-bezier(.4,0,.2,1);
+}
+
+.ring-value{
+    position:absolute;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-family:'JetBrains Mono',monospace;
+    font-weight:700;
+    font-size:1.32rem;
+}
+
+.score-label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:.66rem;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--dim);
+}
+
+/* ---------- Results grid ---------- */
+
+.results-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+    gap:14px;
+    margin-bottom:22px;
+}
+
+.panel{
+    padding:18px 20px;
+}
+
+.panel h2{
+    font-family:'Plus Jakarta Sans',sans-serif;
+    font-size:.95rem;
+    font-weight:700;
+    margin-bottom:12px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+}
+
+.panel h2::before{
+    content:"";
+    width:6px;height:6px;
+    border-radius:1.5px;
+    background:var(--gradient);
+    display:inline-block;
+}
+
+.tag-container{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+}
+
+.tag{
+    background:rgba(139,92,246,.12);
+    border:1px solid rgba(139,92,246,.3);
+    color:#C4B5FD;
+    padding:6px 12px;
+    border-radius:999px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:.74rem;
+    font-weight:600;
+    transition:background .2s ease, transform .15s ease;
+}
+
+.tag:hover{
+    background:rgba(139,92,246,.22);
+    transform:translateY(-1px);
+}
+
+.list{
+    list-style:none;
+    display:flex;
+    flex-direction:column;
+    gap:2px;
+}
+
+.list li{
+    position:relative;
+    padding:9px 0 9px 18px;
+    border-bottom:1px solid rgba(255,255,255,.05);
+    color:#E2E8F0;
+    font-size:.85rem;
+    line-height:1.45;
+}
+
+.list li:last-child{ border-bottom:none; }
+
+.list li::before{
+    content:"";
+    position:absolute;
+    left:0;
+    top:15px;
+    width:6px;height:6px;
+    border-radius:1.5px;
+    background:var(--secondary);
+    opacity:.8;
+}
+
+#weaknesses li::before{ background:#FB923C; }
+#suggestions li::before{ background:var(--success); }
+
+/* ---------- Interview panel ---------- */
+
+.interview-panel{
+    padding:20px 22px;
+}
+
+.interview-panel h2{
+    font-family:'Plus Jakarta Sans',sans-serif;
+    font-size:1.05rem;
+    font-weight:700;
+    margin-bottom:14px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+}
+
+.interview-panel h2::before{
+    content:"";
+    width:6px;height:6px;
+    border-radius:1.5px;
+    background:var(--gradient);
+    display:inline-block;
+}
+
+#interviewQuestions{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+    gap:12px;
+}
+
+.question-card{
+    background:#0D1424;
+    border:1px solid var(--border);
+    border-radius:var(--r-md);
+    padding:16px 14px 14px;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    transition:border-color .2s ease, transform .15s ease;
+}
+
+.question-card:hover{
+    border-color:rgba(139,92,246,.4);
+    transform:translateY(-2px);
+}
+
+.question-number{
+    width:30px;
+    height:30px;
+    border-radius:8px;
+    background:var(--gradient);
+    color:#0A0E1A;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-family:'JetBrains Mono',monospace;
+    font-weight:700;
+    font-size:.78rem;
+    flex-shrink:0;
+}
+
+.question-text{
+    color:#E2E8F0;
+    font-size:.86rem;
+    line-height:1.5;
+}
+
+/* ---------- Empty state hint ---------- */
+
+.empty-hint{
+    text-align:center;
+    color:var(--mute);
+    font-size:.78rem;
+    font-family:'JetBrains Mono',monospace;
+    padding:6px 0 2px;
+}
+
+/* ---------- Responsive ---------- */
+
+@media(min-width:1600px){
+    .results-grid{ grid-template-columns:repeat(4,1fr); }
+}
+
+@media(max-width:900px){
+    .upload-grid{ grid-template-columns:1fr; }
+}
+
+@media(max-width:560px){
+    .container{ padding:24px 0 40px; }
+    .hero h1{ font-size:2rem; }
+    .score-grid{ grid-template-columns:repeat(2,1fr); }
+    .ring{ width:74px; height:74px; }
+    .ring-value{ font-size:1.1rem; }
+}
+</style>
+</head>
+
+<body>
+
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <linearGradient id="ringGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8B5CF6"/>
+      <stop offset="100%" stop-color="#22D3EE"/>
+    </linearGradient>
+  </defs>
+</svg>
+
+<div class="container">
+
+    <div class="eyebrow">
+        <span class="dot"></span>
+        <span id="engineStatus">ANALYSIS_ENGINE // READY</span>
+    </div>
+
+    <section class="hero">
+        <h1>AI <span class="gradient-text">Resume Analyzer</span></h1>
+        <div class="hero-tags">
+            <span>ATS Optimization</span>
+            <span>Job Matching</span>
+            <span>Role Fit Analysis</span>
+            <span>Interview Prep</span>
+        </div>
+    </section>
+
+    <section class="glass upload-card">
+        <div class="upload-grid">
+
+            <div class="dropzone" id="dropZone">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 16V4M12 4l-4 4M12 4l4 4"/>
+                    <path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/>
+                </svg>
+                <h3>Upload Resume</h3>
+                <p>Drag &amp; drop your PDF or click to browse</p>
+                <div class="file-name" id="fileName">No file selected</div>
+                <input type="file" id="resumeFile" hidden accept=".pdf">
+            </div>
+
+            <div class="controls">
+                <div>
+                    <label>Target Role</label>
+                    <select id="role">
+                        <option>AI Engineer</option>
+                        <option>Software Engineer</option>
+                        <option>Data Analyst</option>
+                        <option>Full Stack Developer</option>
+                        <option>Cybersecurity Engineer</option>
+                    </select>
+                </div>
+
+                <div style="flex:1;display:flex;flex-direction:column;">
+                    <label>Job Description</label>
+                    <textarea id="jobDescription" placeholder="Paste the job description here..."></textarea>
+                </div>
+
+                <button class="analyze-btn" id="analyzeBtn">Analyze Resume</button>
+            </div>
+
+        </div>
+    </section>
+
+    <section class="score-grid">
+
+        <div class="glass score-card">
+            <div class="ring">
+                <svg viewBox="0 0 100 100">
+                    <circle class="ring-track" cx="50" cy="50" r="42"></circle>
+                    <circle class="ring-progress" data-ring="resumeScore" cx="50" cy="50" r="42"></circle>
+                </svg>
+                <div class="ring-value"><span id="resumeScore">--</span></div>
+            </div>
+            <div class="score-label">Resume Score</div>
+        </div>
+
+        <div class="glass score-card">
+            <div class="ring">
+                <svg viewBox="0 0 100 100">
+                    <circle class="ring-track" cx="50" cy="50" r="42"></circle>
+                    <circle class="ring-progress" data-ring="atsScore" cx="50" cy="50" r="42"></circle>
+                </svg>
+                <div class="ring-value"><span id="atsScore">--</span></div>
+            </div>
+            <div class="score-label">ATS Score</div>
+        </div>
+
+        <div class="glass score-card">
+            <div class="ring">
+                <svg viewBox="0 0 100 100">
+                    <circle class="ring-track" cx="50" cy="50" r="42"></circle>
+                    <circle class="ring-progress" data-ring="roleFit" cx="50" cy="50" r="42"></circle>
+                </svg>
+                <div class="ring-value"><span id="roleFit">--</span></div>
+            </div>
+            <div class="score-label">Role Fit</div>
+        </div>
+
+        <div class="glass score-card">
+            <div class="ring">
+                <svg viewBox="0 0 100 100">
+                    <circle class="ring-track" cx="50" cy="50" r="42"></circle>
+                    <circle class="ring-progress" data-ring="jobMatch" cx="50" cy="50" r="42"></circle>
+                </svg>
+                <div class="ring-value"><span id="jobMatch">--</span></div>
+            </div>
+            <div class="score-label">Job Match</div>
+        </div>
+
+    </section>
+
+    <section class="results-grid">
+
+        <div class="glass panel">
+            <h2>Skills</h2>
+            <div class="tag-container" id="skills"></div>
+        </div>
+
+        <div class="glass panel">
+            <h2>Strengths</h2>
+            <ul class="list" id="strengths"></ul>
+        </div>
+
+        <div class="glass panel">
+            <h2>Weaknesses</h2>
+            <ul class="list" id="weaknesses"></ul>
+        </div>
+
+        <div class="glass panel">
+            <h2>Suggestions</h2>
+            <ul class="list" id="suggestions"></ul>
+        </div>
+
+    </section>
+
+    <section class="glass interview-panel">
+        <h2>Interview Questions</h2>
+        <div id="interviewQuestions"></div>
+    </section>
+
+</div>
+
+<script>
+
+const API_URL = "http://127.0.0.1:5000/upload";
+
+const dropZone = document.getElementById("dropZone");
+const fileInput = document.getElementById("resumeFile");
+const fileName = document.getElementById("fileName");
+
+dropZone.addEventListener("click", () => {
+    fileInput.click();
+});
+
+fileInput.addEventListener("change", () => {
+    if(fileInput.files.length){
+        fileName.textContent =
+            "✓ " + fileInput.files[0].name;
+    }
+});
+
+dropZone.addEventListener("dragover", e => {
+    e.preventDefault();
+});
+
+dropZone.addEventListener("drop", e => {
+
+    e.preventDefault();
+
+    fileInput.files = e.dataTransfer.files;
+
+    if(fileInput.files.length){
+        fileName.textContent =
+            "✓ " + fileInput.files[0].name;
+    }
+});
+
+// Additional drag visual feedback (does not alter the upload logic above)
+dropZone.addEventListener("dragenter", () => dropZone.classList.add("is-dragover"));
+dropZone.addEventListener("dragleave", () => dropZone.classList.remove("is-dragover"));
+dropZone.addEventListener("drop", () => dropZone.classList.remove("is-dragover"));
+
+function renderList(id,data){
+
+    const el=document.getElementById(id);
+
+    el.innerHTML="";
+
+    data.forEach(item=>{
+
+        const li=document.createElement("li");
+        li.textContent=item;
+
+        el.appendChild(li);
+
+    });
+}
+
+function renderSkills(skills){
+
+    const container =
+        document.getElementById("skills");
+
+    container.innerHTML="";
+
+    skills.forEach(skill=>{
+
+        const tag=document.createElement("div");
+
+        tag.className="tag";
+
+        tag.textContent=skill;
+
+        container.appendChild(tag);
+    });
+}
+
+function renderQuestions(questions){
+
+    const container =
+        document.getElementById(
+            "interviewQuestions"
+        );
+
+    container.innerHTML="";
+
+    questions.forEach((q,index)=>{
+
+        container.innerHTML += `
+            <div class="question-card">
+
+                <div class="question-number">
+                    ${String(index+1).padStart(2,"0")}
+                </div>
+
+                <div class="question-text">
+                    ${q}
+                </div>
+
+            </div>
+        `;
+    });
+}
+
+// Additive helper to drive the circular KPI rings — does not modify any
+// of the preserved render/handler logic, only reads values already in `data`.
+function setRingProgress(id, value){
+    const circle = document.querySelector(`circle[data-ring="${id}"]`);
+    if(!circle) return;
+    const r = circle.r.baseVal.value;
+    const circumference = 2 * Math.PI * r;
+    const pct = Math.max(0, Math.min(100, Number(value) || 0));
+    circle.style.strokeDasharray = `${circumference} ${circumference}`;
+    circle.style.strokeDashoffset = circumference - (pct/100) * circumference;
+}
+
+document
+.getElementById("analyzeBtn")
+.addEventListener("click", async()=>{
+
+    const file=fileInput.files[0];
+
+    if(!file){
+        alert("Upload a resume first");
+        return;
+    }
+
+    const btn =
+        document.getElementById(
+            "analyzeBtn"
+        );
+
+    btn.textContent="Analyzing...";
+    btn.classList.add("is-loading");
+    document.getElementById("engineStatus").textContent = "ANALYSIS_ENGINE // PROCESSING";
+
+    const formData = new FormData();
+
+    formData.append(
+        "resume",
+        file
+    );
+
+    formData.append(
+        "target_role",
+        document.getElementById("role").value
+    );
+
+    formData.append(
+        "job_description",
+        document.getElementById(
+            "jobDescription"
+        ).value
+    );
+
+    try{
+        console.log("Sending request...");
+
+        const response =
+            await fetch(
+                API_URL,
+                {
+                    method:"POST",
+                    body:formData
+                }
+            );
+
+        const data =
+            await response.json();
+
+        document.getElementById("resumeScore").textContent =
+            data.resume_score ?? "--";
+        setRingProgress("resumeScore", data.resume_score);
+
+        document.getElementById("atsScore").textContent =
+            data.ats_score ?? "--";
+        setRingProgress("atsScore", data.ats_score);
+
+        document.getElementById("roleFit").textContent =
+            data.role_fit_score ?? "--";
+        setRingProgress("roleFit", data.role_fit_score);
+
+        document.getElementById("jobMatch").textContent =
+            data.job_match_score ?? "--";
+        setRingProgress("jobMatch", data.job_match_score);
+
+        renderSkills(data.skills || []);
+
+        renderList(
+            "strengths",
+            data.strengths || []
+        );
+
+        renderList(
+            "weaknesses",
+            data.weaknesses || []
+        );
+
+        renderList(
+            "suggestions",
+            data.suggestions || []
+        );
+
+        renderQuestions(
+            data.interview_questions || []
+        );
+
+        document.getElementById("engineStatus").textContent = "ANALYSIS_ENGINE // READY";
+
+    }catch(err){
+
+        console.error(err);
+
+        alert(
+            "Failed to connect to backend"
+        );
+
+        document.getElementById("engineStatus").textContent = "ANALYSIS_ENGINE // READY";
+
+    }
+
+    btn.textContent =
+        "Analyze Resume";
+    btn.classList.remove("is-loading");
+
+});
+</script>
+
+</body>
+</html>
